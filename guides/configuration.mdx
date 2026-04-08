@@ -1,0 +1,131 @@
+---
+title: "Configuration"
+description: "Configure Clicky with clicky.init() to control how tracking, sessions, privacy, and data collection behave in your application."
+---
+
+## Overview
+
+Call `clicky.init()` once — before any other Clicky method — to initialize the library with your site ID and configuration options. Clicky does not track anything until `init()` is called.
+
+```javascript
+clicky.init({
+  siteId: 'YOUR_SITE_ID',
+  autoTrack: true,
+  debug: false,
+});
+```
+
+<Note>
+  Configuration cannot be changed after initialization. To use different settings, reload the page and call `clicky.init()` again with the updated config.
+</Note>
+
+---
+
+## Configuration options
+
+### Required
+
+<ParamField body="siteId" type="string" required>
+  Your Clicky site ID, available from the Clicky dashboard under **Settings → Site ID**. Every tracking request is scoped to this ID.
+</ParamField>
+
+### Tracking behavior
+
+<ParamField body="autoTrack" type="boolean" default="true">
+  When enabled, Clicky automatically tracks all click events and page views without any additional code. Set to `false` if you want full manual control using `clicky.track()` and `clicky.page()`.
+</ParamField>
+
+### Sessions
+
+<ParamField body="sessionTimeout" type="number" default="1800">
+  Number of seconds of inactivity before a session is considered expired. After the timeout elapses, the next user interaction starts a new session. The default is 1800 seconds (30 minutes).
+</ParamField>
+
+### Privacy
+
+<ParamField body="respectDNT" type="boolean" default="false">
+  When set to `true`, Clicky will not track users who have enabled the **Do Not Track** header in their browser. No events, page views, or cookies are written for those users.
+</ParamField>
+
+<ParamField body="anonymizeIp" type="boolean" default="false">
+  When set to `true`, the last octet of each user's IP address is zeroed out before storage (e.g., `192.168.1.0` instead of `192.168.1.42`). Enable this to reduce the personal data Clicky stores.
+</ParamField>
+
+### Cookies and domains
+
+<ParamField body="cookieDomain" type="string">
+  Sets a custom domain for Clicky's tracking cookies. Use this to share session data across subdomains. For example, setting `".example.com"` allows cookies to be read by both `app.example.com` and `www.example.com`.
+</ParamField>
+
+### Advanced
+
+<ParamField body="apiEndpoint" type="string">
+  Overrides the default Clicky data collection endpoint URL. Use this if you are proxying tracking requests through your own server to avoid ad blockers or to satisfy network policy requirements.
+</ParamField>
+
+<ParamField body="debug" type="boolean" default="false">
+  Enables verbose console logging. When active, Clicky logs each tracked event, configuration details, and network request status to the browser console.
+</ParamField>
+
+---
+
+## Complete configuration example
+
+The following example shows all available options in a single `init()` call with commonly used values:
+
+```javascript
+clicky.init({
+  // Required
+  siteId: 'abc123xyz',
+
+  // Tracking behavior
+  autoTrack: true,
+
+  // Sessions
+  sessionTimeout: 3600, // 1 hour
+
+  // Privacy
+  respectDNT: true,
+  anonymizeIp: true,
+
+  // Cookies
+  cookieDomain: '.example.com',
+
+  // Advanced
+  apiEndpoint: 'https://collect.example.com/v1',
+  debug: false,
+});
+```
+
+---
+
+## Environment-specific configuration
+
+Use different settings per environment by reading from environment variables or a config object:
+
+<CodeGroup>
+
+```javascript Browser (vanilla)
+const isDev = window.location.hostname === 'localhost';
+
+clicky.init({
+  siteId: 'abc123xyz',
+  debug: isDev,
+  anonymizeIp: !isDev,
+});
+```
+
+```javascript Node-injected config
+clicky.init({
+  siteId: process.env.CLICKY_SITE_ID,
+  debug: process.env.NODE_ENV !== 'production',
+  anonymizeIp: true,
+  respectDNT: true,
+});
+```
+
+</CodeGroup>
+
+<Tip>
+  Enable `debug: true` during local development to see every tracked event printed to the browser console. Remember to turn it off before deploying to production.
+</Tip>

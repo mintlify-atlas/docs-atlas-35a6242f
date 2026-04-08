@@ -1,0 +1,97 @@
+---
+title: "API overview"
+description: "Complete reference for the Clicky JavaScript SDK."
+---
+
+Clicky exposes a single global `clicky` object that is available on `window` after the script loads. All tracking methods live on this object — there is nothing else to import or configure beyond your initial `clicky.init()` call.
+
+## Installation
+
+Add Clicky to your page with a single script tag:
+
+```html
+<script src="https://cdn.clicky.io/clicky.min.js"></script>
+```
+
+Once the script executes, `window.clicky` is available synchronously. If you load Clicky asynchronously or via a module bundler, the global is still registered on `window` after the module initializes.
+
+## Available methods
+
+<Columns cols={2}>
+  <Card title="clicky.init()" icon="gear" href="/api/init">
+    Initialize the SDK with your site ID and configuration options. Must be called once before any other method.
+  </Card>
+  <Card title="clicky.track()" icon="arrow-pointer" href="/api/track">
+    Record a named custom event with optional key-value properties.
+  </Card>
+  <Card title="clicky.identify()" icon="user" href="/api/identify">
+    Associate a user identity and traits with all subsequent events in the session.
+  </Card>
+  <Card title="clicky.page()" icon="file" href="/api/page">
+    Manually record a page view. Useful in single-page applications.
+  </Card>
+  <Card title="clicky.reset()" icon="arrow-rotate-left" href="/api/reset">
+    Clear the current user identity and session data.
+  </Card>
+</Columns>
+
+## Usage pattern
+
+Always call `clicky.init()` before any other method. All other methods depend on the configuration established during initialization.
+
+```javascript
+// 1. Initialize first
+clicky.init({ siteId: "YOUR_SITE_ID" });
+
+// 2. Identify the user (if authenticated)
+clicky.identify("user_123", { plan: "pro" });
+
+// 3. Track interactions
+clicky.track("dashboard_viewed");
+
+// 4. Record page views in SPAs
+clicky.page("Dashboard");
+```
+
+## TypeScript support
+
+Clicky ships with first-party TypeScript definitions. Import the types directly from the package if you are using a bundler:
+
+```typescript
+import type { ClickyConfig, ClickyTraits, ClickyProperties } from "@clicky/web";
+
+const config: ClickyConfig = {
+  siteId: "YOUR_SITE_ID",
+  autoTrack: true,
+  debug: false,
+};
+
+clicky.init(config);
+```
+
+When using the CDN script tag, the `clicky` global is automatically typed if you reference the Clicky type declarations in your `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "types": ["@clicky/web"]
+  }
+}
+```
+
+## Pre-initialization behavior
+
+Calling any method before `clicky.init()` does **not** throw an error. Clicky silently queues the calls and replays them in order once `init()` completes. This means you can safely call `clicky.track()` or `clicky.identify()` early in your application boot sequence without guarding against race conditions.
+
+```javascript
+// Safe — these calls are queued until init() runs
+clicky.identify("user_123", { plan: "pro" });
+clicky.track("app_booted");
+
+// init() flushes the queue and replays all queued calls
+clicky.init({ siteId: "YOUR_SITE_ID" });
+```
+
+## Browser support
+
+Clicky supports all modern browsers, including the latest versions of Chrome, Firefox, Safari, and Edge. Internet Explorer 11 is not supported.

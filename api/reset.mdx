@@ -1,0 +1,70 @@
+---
+title: "clicky.reset()"
+description: "Clear the current user identity and end the active session."
+---
+
+`clicky.reset()` clears the user identity established by `clicky.identify()` and ends the current session. Use it when a user logs out of your application.
+
+## Signature
+
+```typescript
+clicky.reset(): void
+```
+
+## Parameters
+
+This method takes no parameters.
+
+## Behavior
+
+When `clicky.reset()` is called:
+
+1. The current user identity (`userId` and `traits`) is removed from storage
+2. The active session is ended and a new anonymous session begins
+3. All subsequent events are attributed to the new anonymous session until `clicky.identify()` is called again
+
+## Example
+
+### Logout flow
+
+Call `clicky.reset()` when the user signs out of your application.
+
+```javascript
+async function handleLogout() {
+  await auth.signOut();
+
+  // Clear Clicky identity and session
+  clicky.reset();
+
+  // Redirect to login page
+  window.location.href = "/login";
+}
+```
+
+### With a confirmation
+
+```javascript
+document.getElementById("logout-btn").addEventListener("click", () => {
+  clicky.track("logout_clicked");
+  clicky.reset();
+});
+```
+
+<Note>
+After calling `clicky.reset()`, the next `clicky.identify()` call will start a fresh user session. Events tracked between `reset()` and the next `identify()` are attributed to an anonymous session.
+</Note>
+
+<Tip>
+Always call `clicky.reset()` on logout to prevent subsequent anonymous activity from being attributed to the previous user — especially on shared devices.
+</Tip>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="clicky.identify()" icon="user" href="/api/identify">
+    Associate a user identity with subsequent events.
+  </Card>
+  <Card title="Sessions" icon="user-clock" href="/concepts/sessions">
+    Learn how Clicky manages session lifecycle.
+  </Card>
+</CardGroup>

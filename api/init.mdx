@@ -1,0 +1,99 @@
+---
+title: "clicky.init()"
+description: "Initialize the Clicky SDK with your configuration."
+---
+
+## Signature
+
+```typescript
+clicky.init(config: ClickyConfig): void
+```
+
+Call `clicky.init()` once per page load, as early as possible in your application. Passing your `siteId` is the only required step — all other options have sensible defaults.
+
+<Warning>
+  Calling `clicky.init()` more than once has no effect. The SDK ignores any subsequent calls with different configuration. To apply new settings, reload the page.
+</Warning>
+
+## Parameters
+
+<ParamField body="config" type="ClickyConfig" required>
+  Configuration object for the SDK. See the properties below.
+
+  <Expandable title="config properties">
+    <ParamField body="siteId" type="string" required>
+      Your unique Clicky site ID. You can find this in your Clicky dashboard under **Settings → Site ID**.
+    </ParamField>
+
+    <ParamField body="autoTrack" type="boolean" default="true">
+      When `true`, Clicky automatically tracks click events across the entire page and records a page view on initial load and on `popstate` navigation events. Set to `false` to disable automatic tracking and rely entirely on manual `clicky.track()` and `clicky.page()` calls.
+    </ParamField>
+
+    <ParamField body="sessionTimeout" type="number" default="1800">
+      Idle timeout in seconds before the current session is considered ended. If the user takes no action for this duration, the next interaction starts a new session. Minimum value is `60`.
+    </ParamField>
+
+    <ParamField body="respectDNT" type="boolean" default="false">
+      When `true`, Clicky checks the browser's [Do Not Track](https://developer.mozilla.org/en-US/docs/Web/API/Navigator/doNotTrack) setting. If the user has enabled DNT, all tracking is disabled for that session and no data is sent to Clicky's servers. No action is taken when DNT is not set or is disabled.
+    </ParamField>
+
+    <ParamField body="anonymizeIp" type="boolean" default="false">
+      When `true`, the last octet of the user's IP address is replaced with `0` before it is stored (e.g., `203.0.113.42` becomes `203.0.113.0`). Useful for GDPR compliance when you want to retain coarse geographic data without storing precise IP addresses.
+    </ParamField>
+
+    <ParamField body="cookieDomain" type="string">
+      Override the domain used for Clicky's first-party tracking cookie. By default, Clicky sets the cookie on the current hostname. Set this to a root domain (e.g., `".example.com"`) to share identity across subdomains such as `app.example.com` and `www.example.com`.
+    </ParamField>
+
+    <ParamField body="apiEndpoint" type="string">
+      Send tracking data to a custom collection endpoint instead of Clicky's default servers. Use this to route events through your own proxy server, which can help with ad-blocker compatibility or data residency requirements. The endpoint must accept the same payload format as Clicky's collection API.
+    </ParamField>
+
+    <ParamField body="debug" type="boolean" default="false">
+      When `true`, Clicky logs all SDK activity — including queued calls, network requests, and configuration — to the browser console. Disable this in production.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Examples
+
+### Minimal configuration
+
+```javascript
+clicky.init({
+  siteId: "YOUR_SITE_ID",
+});
+```
+
+### Full configuration
+
+```javascript
+clicky.init({
+  siteId: "YOUR_SITE_ID",
+  autoTrack: true,
+  sessionTimeout: 3600,
+  respectDNT: true,
+  anonymizeIp: true,
+  cookieDomain: ".example.com",
+  apiEndpoint: "https://proxy.example.com/clicky",
+  debug: false,
+});
+```
+
+### TypeScript
+
+```typescript
+import type { ClickyConfig } from "@clicky/web";
+
+const config: ClickyConfig = {
+  siteId: "YOUR_SITE_ID",
+  anonymizeIp: true,
+  respectDNT: true,
+};
+
+clicky.init(config);
+```
+
+<Note>
+  `clicky.init()` must be called once per page load. For single-page applications, do not call it again on route changes — Clicky persists its initialized state for the lifetime of the page.
+</Note>

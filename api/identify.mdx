@@ -1,0 +1,112 @@
+---
+title: "clicky.identify()"
+description: "Associate a user identity with all subsequent events."
+---
+
+## Signature
+
+```typescript
+clicky.identify(userId: string, traits?: Record<string, string | number | boolean>): void
+```
+
+Call `clicky.identify()` to link a known user to all events recorded in the current session. Once called, every subsequent `clicky.track()` and `clicky.page()` call is automatically associated with that user. Events recorded earlier in the same session are retroactively linked as well.
+
+<Warning>
+  Do not use PII — such as email addresses, full names, or phone numbers — as the `userId`. Use an opaque, stable identifier like a database primary key (e.g., `"user_8f3a2c"`). Storing PII as a user ID makes it harder to comply with deletion requests and data privacy regulations.
+</Warning>
+
+## Parameters
+
+<ParamField body="userId" type="string" required>
+  A unique, stable identifier for the user. This should be the same ID you use in your own database so you can correlate Clicky data with your user records. The value persists in a first-party cookie for the duration of the session.
+</ParamField>
+
+<ParamField body="traits" type="object">
+  An optional flat object of attributes that describe the user. Traits are merged with any existing traits stored from a previous `clicky.identify()` call — they are not replaced. Values must be `string`, `number`, or `boolean`.
+
+  <Expandable title="common traits">
+    <ResponseField name="plan" type="string">
+      The user's current subscription plan (e.g., `"starter"`, `"pro"`, `"enterprise"`).
+    </ResponseField>
+    <ResponseField name="role" type="string">
+      The user's role within the product (e.g., `"admin"`, `"viewer"`).
+    </ResponseField>
+    <ResponseField name="created_at" type="number">
+      Unix timestamp (seconds) when the user account was created. Useful for cohort analysis.
+    </ResponseField>
+    <ResponseField name="account_id" type="string">
+      The ID of the organization or account the user belongs to, for B2B products.
+    </ResponseField>
+  </Expandable>
+</ParamField>
+
+## When to call identify
+
+Call `clicky.identify()` in two situations:
+
+- **After a successful login** — the user has just authenticated and you have their ID available.
+- **On page load when a session is already active** — the user is returning and you can read their ID from your session store or auth token.
+
+Do not call `clicky.identify()` before a user logs in or for anonymous visitors. Use `clicky.reset()` to clear identity when a user logs out.
+
+## How identity persists
+
+Clicky stores the `userId` and `traits` in a first-party cookie scoped to the current domain (or `cookieDomain` if configured). The identity persists across page loads until one of the following occurs:
+
+- `clicky.reset()` is called.
+- The cookie expires (aligned with `sessionTimeout`).
+- The user clears their browser data.
+
+## Examples
+
+### Login flow
+
+Call `identify()` immediately after a successful authentication response:
+
+```javascript
+async function handleLogin(email, password) {
+  const user = await auth.signIn(email, password);
+
+  clicky.identify(user.id, {
+    plan: user.subscription.plan,
+    role: user.role,
+    created_at: user.createdAt,
+  });
+
+  redirectToDashboard();
+}
+```
+
+### Page load with active session
+
+Restore identity on every page load so events are always attributed to the correct user:
+
+```javascript
+// Runs on DOMContentLoaded or equivalent
+const session = auth.getSession();
+
+if (session) {
+  clicky.identify(session.userId, {
+    plan: session.plan,
+    role: session.role,
+  });
+}
+```
+
+### Updating traits
+
+Calling `clicky.identify()` again with new trait values merges them into the existing trait set. Existing traits not included in the new call are preserved:
+
+```javascript
+// Initial identify on login
+clicky.identify("user_8f3a2c", { plan: "starter", role: "admin" });
+
+// Later, after the user upgrades — only the changed trait needs to be passed
+clicky.identify("user_8f3a2c", { plan: "pro" });
+
+// Effective traits are now: { plan: "pro", role: "admin" }
+```
+
+<Note>
+  Retroactive linking applies within a single page session. Events from a previous page load that occurred before `identify()` was called are not retroactively linked.
+</Note>

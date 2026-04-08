@@ -1,0 +1,58 @@
+---
+title: Introduction
+description: Clicky is a lightweight, privacy-first click and user interaction tracking library for web applications.
+---
+
+Clicky lets you capture clicks, page views, and custom user interactions with minimal setup. It instruments your DOM automatically, so you start collecting meaningful data the moment you initialize it — no manual tagging required.
+
+## Key features
+
+<CardGroup cols={3}>
+  <Card title="Automatic click capture" icon="arrow-pointer">
+    Clicky instruments the entire DOM on load and captures every click without manual tagging.
+  </Card>
+  <Card title="Custom event tracking" icon="wand-magic-sparkles">
+    Call `clicky.track()` to record any interaction — form submissions, video plays, feature usage.
+  </Card>
+  <Card title="Session management" icon="user-clock">
+    Events are automatically grouped into sessions, giving you a full picture of each user journey.
+  </Card>
+  <Card title="User identification" icon="circle-user">
+    Link anonymous events to known users at any point with `clicky.identify()`.
+  </Card>
+  <Card title="Privacy controls" icon="shield-halved">
+    Built-in support for GDPR compliance, data anonymization, consent management, and opt-out flows.
+  </Card>
+  <Card title="Framework agnostic" icon="layer-group">
+    Works in any JavaScript environment — vanilla JS, React, Vue, Svelte, Angular, or any other framework.
+  </Card>
+</CardGroup>
+
+## How it works
+
+When you call `clicky.init()`, Clicky attaches a global event listener to the document. It captures click events as they bubble up the DOM, enriching each event with contextual metadata: the element type, text content, `data-clicky-*` attributes, and the current page URL.
+
+Events are batched and sent to the Clicky ingestion endpoint at regular intervals, reducing network overhead. Sessions are managed client-side using a combination of cookies and `sessionStorage`, with automatic expiry after 30 minutes of inactivity.
+
+```
+User click → DOM event listener → Event enrichment → Batch queue → Clicky ingestion API
+```
+
+You can extend this pipeline at any point: add custom properties to every event via `clicky.init()`, identify users mid-session with `clicky.identify()`, or manually track events that don't involve DOM interactions using `clicky.track()`.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Get Clicky running in your app in under 5 minutes.
+  </Card>
+  <Card title="Installation" icon="download" href="/installation">
+    All installation methods: script tag, npm, yarn, pnpm, and ES modules.
+  </Card>
+  <Card title="Core concepts" icon="book" href="/concepts/tracking">
+    Understand how Clicky tracks clicks, events, and sessions.
+  </Card>
+  <Card title="API reference" icon="code" href="/api/overview">
+    Full reference for `init`, `track`, `identify`, `page`, and `reset`.
+  </Card>
+</CardGroup>

@@ -1,0 +1,123 @@
+---
+title: Installation
+description: Add Clicky to your project via a script tag, npm, yarn, pnpm, or ES module import.
+---
+
+Clicky supports several installation methods. Choose the one that fits your project setup.
+
+<Tabs>
+  <Tab title="Script tag (CDN)">
+    The simplest way to add Clicky — no build step required. Paste the script tag into your HTML `<head>` before any other scripts.
+
+    ```html index.html
+    <!doctype html>
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <title>My App</title>
+        <script src="https://cdn.clicky.io/clicky.min.js"></script>
+      </head>
+      <body>
+        <!-- your app -->
+        <script>
+          clicky.init({ siteId: "YOUR_SITE_ID" });
+        </script>
+      </body>
+    </html>
+    ```
+
+    <Tip>
+      For best performance, load the script asynchronously using the `async` attribute. Clicky queues any calls made before the script finishes loading and replays them once it's ready.
+
+      ```html
+      <script async src="https://cdn.clicky.io/clicky.min.js"></script>
+      ```
+    </Tip>
+  </Tab>
+  <Tab title="npm / yarn / pnpm">
+    Install Clicky from the npm registry using your preferred package manager.
+
+    <CodeGroup>
+
+    ```bash npm
+    npm install @clicky/web
+    ```
+
+    ```bash yarn
+    yarn add @clicky/web
+    ```
+
+    ```bash pnpm
+    pnpm add @clicky/web
+    ```
+
+    </CodeGroup>
+
+    Then import and initialize Clicky in your app's entry point:
+
+    ```javascript main.js
+    import clicky from "@clicky/web";
+
+    clicky.init({ siteId: "YOUR_SITE_ID" });
+    ```
+  </Tab>
+  <Tab title="ES module">
+    If you prefer to import directly from a URL without installing a package, use the ESM build from the CDN:
+
+    ```html index.html
+    <script type="module">
+      import clicky from "https://cdn.clicky.io/clicky.esm.js";
+
+      clicky.init({ siteId: "YOUR_SITE_ID" });
+    </script>
+    ```
+
+    This approach works without a bundler or build tool and is well-suited for simple projects and prototypes.
+  </Tab>
+</Tabs>
+
+## Minimal setup
+
+Regardless of how you install Clicky, the minimum required setup is a single `clicky.init()` call with your site ID:
+
+```javascript
+clicky.init({
+  siteId: "YOUR_SITE_ID",
+});
+```
+
+After this call:
+
+- Automatic click tracking is active across the entire page
+- The current page view is recorded
+- A session is created or resumed for the current visitor
+
+You can pass additional configuration options to `clicky.init()` — see the [configuration guide](/guides/configuration) for the full list.
+
+<Note>
+  Clicky requires a modern browser environment. The following are supported:
+
+  - Chrome 80+
+  - Firefox 75+
+  - Safari 13.1+
+  - Edge 80+
+
+  Internet Explorer is not supported. If you need IE compatibility, consider polyfilling or excluding Clicky from IE builds using a conditional script loader.
+</Note>
+
+## Verifying the installation
+
+After initializing Clicky, open your browser's developer tools and check the **Network** tab. You should see a request to `https://api.clicky.io/collect` shortly after the page loads, confirming that Clicky is active and sending data.
+
+You can also check the **Live Events** panel in your Clicky dashboard — page views and clicks will appear there in real time.
+
+## What's next
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Walk through initializing Clicky and tracking your first events.
+  </Card>
+  <Card title="Configuration" icon="sliders" href="/guides/configuration">
+    All available options for `clicky.init()`.
+  </Card>
+</CardGroup>

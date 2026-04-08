@@ -1,80 +1,141 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quickstart
+description: Get Clicky running in your app in under 5 minutes.
 ---
 
-## Get started in three steps
+This guide walks you through a complete end-to-end setup: installing Clicky, initializing it, and tracking your first events.
 
-Get your documentation site running locally and make your first customization.
+<Steps>
+  <Step title="Install Clicky">
+    Add Clicky to your project using a script tag or your package manager.
 
-### Step 1: Set up your local environment
+    <CodeGroup>
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+    ```html script tag
+    <script src="https://cdn.clicky.io/clicky.min.js"></script>
+    ```
 
-### Step 2: Deploy your changes
+    ```bash npm
+    npm install @clicky/web
+    ```
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+    ```bash yarn
+    yarn add @clicky/web
+    ```
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+    ```bash pnpm
+    pnpm add @clicky/web
+    ```
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+    </CodeGroup>
+  </Step>
+  <Step title="Initialize Clicky">
+    Call `clicky.init()` as early as possible in your app — ideally before any other JavaScript runs. Pass your site ID from the Clicky dashboard.
 
-### Step 3: Go live
+    ```javascript
+    clicky.init({
+      siteId: "YOUR_SITE_ID",
+    });
+    ```
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+    Once initialized, Clicky is active. You don't need to do anything else to start collecting data.
 
-## Next steps
+    <Note>
+      Replace `"YOUR_SITE_ID"` with the ID from your Clicky dashboard. Each site you add gets a unique ID.
+    </Note>
+  </Step>
+  <Step title="Auto-tracking is active">
+    After `clicky.init()` runs, Clicky automatically tracks the following without any extra code:
 
-Now that you have your docs running, explore these key features:
+    - **Clicks** — every click on any element across the page, enriched with element metadata
+    - **Page views** — the current page URL and title are recorded on initialization
+
+    You can verify this is working by opening the **Live Events** panel in your Clicky dashboard. Clicks you make on the page will appear within seconds.
+
+    <Tip>
+      Add `data-clicky-label="my-button"` to any element to give it a human-readable name in your dashboard. Clicky picks this up automatically.
+    </Tip>
+  </Step>
+  <Step title="Track a custom event">
+    Use `clicky.track()` to record any user action that isn't a raw click — form submissions, video plays, feature usage, and so on.
+
+    ```javascript
+    // Track a simple event
+    clicky.track("signed_up");
+
+    // Track an event with properties
+    clicky.track("plan_selected", {
+      plan: "pro",
+      billing: "annual",
+      price: 99,
+    });
+    ```
+
+    The first argument is the event name (a string). The second argument is an optional object of properties — any key-value pairs you want to associate with the event.
+  </Step>
+  <Step title="Identify a user">
+    By default, Clicky tracks users anonymously. Once a user signs in or completes an action that reveals their identity, call `clicky.identify()` to link all subsequent events to that user.
+
+    ```javascript
+    clicky.identify("user_123", {
+      name: "Jane Doe",
+      email: "jane@example.com",
+      plan: "pro",
+    });
+    ```
+
+    You can call `clicky.identify()` at any point — Clicky will retroactively associate prior events from the same session with the identified user.
+  </Step>
+</Steps>
+
+## Complete example
+
+Here's everything together in a single setup file:
+
+```javascript app.js
+import clicky from "@clicky/web";
+
+// 1. Initialize
+clicky.init({
+  siteId: "abc123xyz",
+});
+
+// 2. Identify the user once they log in
+function onLogin(user) {
+  clicky.identify(user.id, {
+    name: user.name,
+    email: user.email,
+    plan: user.plan,
+  });
+}
+
+// 3. Track a custom event
+document.querySelector("#upgrade-btn").addEventListener("click", () => {
+  clicky.track("upgrade_clicked", {
+    source: "navbar",
+    plan: "pro",
+  });
+});
+
+// 4. Track a page view when navigating in an SPA
+function onRouteChange(pageName) {
+  clicky.page(pageName, { path: window.location.pathname });
+}
+```
+
+## What's next
 
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Installation methods" icon="download" href="/installation">
+    CDN, npm, yarn, pnpm, and ES module import options.
+  </Card>
+  <Card title="Core concepts" icon="book" href="/concepts/tracking">
+    Learn how Clicky instruments the DOM and manages sessions.
+  </Card>
+  <Card title="Custom events" icon="wand-magic-sparkles" href="/guides/custom-events">
+    Best practices for naming and structuring your events.
+  </Card>
+  <Card title="API reference" icon="code" href="/api/overview">
+    Full reference for all five Clicky API methods.
+  </Card>
 </CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>

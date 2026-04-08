@@ -1,0 +1,100 @@
+---
+title: 'Sessions'
+description: 'Learn how Clicky defines user sessions, how they persist across page loads, and how to configure session timeout behavior.'
+---
+
+A session is a contiguous period of user activity on your site or application. Clicky groups all events that occur within a session together, giving you a coherent view of what a user did during a single visit — which pages they viewed, what they clicked, and how the visit ended.
+
+By default, a session expires after **30 minutes of inactivity**. If the user takes an action after the timeout, Clicky starts a new session.
+
+## Session lifecycle
+
+<Steps>
+  <Step title="Session start">
+    A new session begins when Clicky initializes and no active session exists in storage, or when the user returns after the idle timeout has elapsed. A `session_start` event is emitted automatically.
+  </Step>
+  <Step title="Active">
+    While the user interacts with the page, Clicky resets the inactivity timer on every tracked event. The session remains active and all events are associated with the same session ID.
+  </Step>
+  <Step title="Idle timeout">
+    If no events are recorded for 30 minutes (or your configured timeout), the session is marked as ended. The timer runs client-side and does not require a network call.
+  </Step>
+  <Step title="Session end">
+    A `session_end` event is dispatched when the idle timeout elapses or when the user closes the tab (via the `visibilitychange` and `pagehide` APIs). The session record is finalized with an end timestamp and total event count.
+  </Step>
+</Steps>
+
+## Session data
+
+Each session record contains the following data:
+
+| Field             | Description                                                        |
+| ----------------- | ------------------------------------------------------------------ |
+| `session_id`      | Unique identifier for the session (UUID v4)                        |
+| `started_at`      | ISO 8601 timestamp of the first event in the session               |
+| `ended_at`        | ISO 8601 timestamp of the last event or idle timeout               |
+| `page_sequence`   | Ordered list of URLs visited during the session                    |
+| `event_count`     | Total number of events recorded in the session                     |
+| `user_id`         | Set when `clicky.identify()` is called (may be `null` for anonymous sessions) |
+
+## Anonymous vs. identified sessions
+
+<Columns cols={2}>
+  <Card title="Anonymous session" icon="user-slash">
+    Before `clicky.identify()` is called, events are associated with a device fingerprint. The session has a `session_id` but no `user_id`. This is the default state for new visitors.
+  </Card>
+  <Card title="Identified session" icon="user-check">
+    After `clicky.identify()` is called, the current session and all subsequent events are linked to the provided `userId`. Events already captured in the same session are retroactively attributed to that user.
+  </Card>
+</Columns>
+
+<Note>
+  When you call `clicky.identify()`, Clicky links the `userId` to the active session retroactively. Events that were recorded earlier in the same session — before identification — are attributed to the user in your dashboard. This ensures you don't lose early funnel activity for users who sign in mid-session.
+</Note>
+
+```javascript
+// User arrives anonymously — events recorded here are anonymous
+clicky.track('landing_page_viewed', { source: 'google' });
+
+// User signs in — all events in this session are now attributed to user_42
+clicky.identify('user_42', {
+  email: 'taylor@example.com',
+  plan: 'pro',
+});
+
+// This event is associated with user_42
+clicky.track('dashboard_viewed');
+```
+
+## Session persistence across page loads
+
+Clicky persists the active session across page loads using a combination of `sessionStorage` and a lightweight device fingerprint.
+
+- **`sessionStorage`** holds the current `session_id` and the last activity timestamp. Because `sessionStorage` is scoped to the browser tab, navigating to a new page in the same tab continues the existing session.
+- **Device fingerprint** is used to recover session context when `sessionStorage` is unavailable (for example, in some embedded WebView environments). The fingerprint is derived from non-PII signals such as screen dimensions, timezone, and language.
+
+When a page loads, Clicky checks `sessionStorage` for an existing session. If the stored last-activity timestamp is within the timeout window, the session resumes. If it has elapsed, a new session starts.
+
+## Configuring session timeout
+
+You can change the default 30-minute idle timeout by passing `sessionTimeout` (in seconds) to `clicky.init()`.
+
+```javascript
+clicky.init({
+  siteId: 'YOUR_SITE_ID',
+  sessionTimeout: 900, // end session after 15 minutes of inactivity (in seconds)
+});
+```
+
+<Columns cols={2}>
+  <Card title="Shorter timeout" icon="clock">
+    Use a shorter timeout (10–15 minutes) for transactional applications where sessions are naturally short and distinct, such as checkout flows or support tools.
+  </Card>
+  <Card title="Longer timeout" icon="hourglass">
+    Use a longer timeout (60+ minutes) for content-heavy or productivity applications where users may read for long periods without triggering events.
+  </Card>
+</Columns>
+
+<Warning>
+  Setting `sessionTimeout` to a very large value (for example, 1440 minutes / 24 hours) will merge what would otherwise be separate visits into a single session. This can skew session-level metrics like session duration and page depth in your dashboard.
+</Warning>

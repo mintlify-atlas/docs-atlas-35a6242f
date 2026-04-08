@@ -1,97 +1,71 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Clicky"
+description: "A lightweight click and user interaction tracking library for web applications."
 ---
 
-## Setting up
+Clicky makes it easy to capture clicks, page views, and custom user interactions — with minimal setup and maximum privacy control. Drop it into any web project and start understanding how users engage with your product.
 
-Get your documentation site up and running in minutes.
-
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Get Clicky running in your app in under 5 minutes.
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Installation" icon="download" href="/installation">
+    Install Clicky via a script tag, npm, or CDN.
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="Core Concepts" icon="book" href="/concepts/tracking">
+    Understand how Clicky tracks clicks, events, and sessions.
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="API Reference" icon="code" href="/api/overview">
+    Explore the full Clicky JavaScript API.
   </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## Get started in minutes
 
-Everything you need to create world-class documentation.
+<Steps>
+  <Step title="Install Clicky">
+    Add Clicky to your project via a script tag or your package manager of choice.
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+    ```html
+    <script src="https://cdn.clicky.io/clicky.min.js"></script>
+    ```
+  </Step>
+  <Step title="Initialize the library">
+    Call `clicky.init()` with your site ID to start tracking.
 
-## Need inspiration?
+    ```javascript
+    clicky.init({ siteId: "YOUR_SITE_ID" });
+    ```
+  </Step>
+  <Step title="Track your first event">
+    Use `clicky.track()` to capture any custom interaction.
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+    ```javascript
+    clicky.track("button_clicked", { label: "Sign Up" });
+    ```
+  </Step>
+  <Step title="Identify your users">
+    Link events to specific users with `clicky.identify()`.
+
+    ```javascript
+    clicky.identify("user_123", { name: "Jane Doe", plan: "pro" });
+    ```
+  </Step>
+</Steps>
+
+## Why Clicky?
+
+<CardGroup cols={2}>
+  <Card title="Automatic click tracking" icon="arrow-pointer">
+    Clicky captures clicks across your entire UI without any manual instrumentation.
+  </Card>
+  <Card title="Custom events" icon="wand-magic-sparkles">
+    Track any user action — form submissions, video plays, feature usage — with a single call.
+  </Card>
+  <Card title="Session management" icon="user-clock">
+    Understand full user journeys with automatic session grouping and replay support.
+  </Card>
+  <Card title="Privacy-first" icon="shield-halved">
+    Built-in controls for GDPR compliance, data anonymization, and opt-out flows.
+  </Card>
+</CardGroup>

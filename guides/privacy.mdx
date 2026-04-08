@@ -1,0 +1,192 @@
+---
+title: "Privacy & compliance"
+description: "Configure Clicky to meet GDPR requirements, implement consent flows, and protect user privacy with IP anonymization and Do Not Track support."
+---
+
+## Privacy-first design
+
+Clicky is designed to give you control over what data is collected and when. All tracking is opt-in at the code level — nothing is sent to Clicky's servers until you call `clicky.init()`. Combined with IP anonymization, Do Not Track support, and consent-gated initialization, you can build a compliant analytics setup for any jurisdiction.
+
+---
+
+## What Clicky collects by default
+
+When `autoTrack` is enabled, Clicky records the following for each session:
+
+| Data point | Description |
+|---|---|
+| Page URL | The URL of the page viewed |
+| Referrer | Where the visitor came from |
+| Browser and OS | User agent string |
+| Screen resolution | Viewport dimensions |
+| IP address | Used for geolocation; see anonymization below |
+| Click targets | Element tag, text, and position |
+| Session timestamps | When a session started and ended |
+
+Clicky does **not** collect form values, passwords, or text input content.
+
+---
+
+## GDPR compliance
+
+### Anonymize IP addresses
+
+Under GDPR, IP addresses are considered personal data. Enable `anonymizeIp` to zero out the last octet of every IP address before it is stored:
+
+```javascript
+clicky.init({
+  siteId: 'YOUR_SITE_ID',
+  anonymizeIp: true,
+});
+```
+
+With `anonymizeIp: true`, the address `203.0.113.42` is stored as `203.0.113.0`. Geolocation still works at the country and region level.
+
+### Respect Do Not Track
+
+Browsers allow users to signal that they do not want to be tracked by setting the `DNT` header. Enable `respectDNT` to honor this preference — no events, page views, or cookies are written for users who have enabled it:
+
+```javascript
+clicky.init({
+  siteId: 'YOUR_SITE_ID',
+  respectDNT: true,
+});
+```
+
+<Note>
+  The Do Not Track standard is not enforced by browsers and may not be widely set by users. For a legally compliant implementation, use a consent flow (below) rather than relying solely on `respectDNT`.
+</Note>
+
+---
+
+## Implementing a consent flow
+
+Many privacy regulations (GDPR, ePrivacy) require explicit user consent before dropping tracking cookies or collecting behavioral data. The recommended pattern is to delay `clicky.init()` until the user accepts your cookie policy.
+
+### Initialize only after consent
+
+```javascript
+// consent-manager.js
+
+function onUserAcceptsTracking() {
+  clicky.init({
+    siteId: 'YOUR_SITE_ID',
+    anonymizeIp: true,
+    respectDNT: true,
+  });
+
+  // Track the consent acceptance itself
+  clicky.track('consent_accepted', { source: 'cookie_banner' });
+}
+
+// Wire this up to your cookie banner's accept button
+document.getElementById('accept-cookies').addEventListener('click', function () {
+  // Persist consent decision
+  localStorage.setItem('clicky_consent', 'granted');
+  onUserAcceptsTracking();
+});
+```
+
+On subsequent page loads, check the stored consent before initializing:
+
+```javascript
+// app.js
+
+document.addEventListener('DOMContentLoaded', function () {
+  const consent = localStorage.getItem('clicky_consent');
+
+  if (consent === 'granted') {
+    clicky.init({
+      siteId: 'YOUR_SITE_ID',
+      anonymizeIp: true,
+    });
+  }
+});
+```
+
+### Opt-out flow
+
+Allow users to withdraw consent at any time. Use `clicky.reset()` to clear the current user identity, then stop future tracking:
+
+```javascript
+function onUserRevokesConsent() {
+  // Clear the current identity
+  clicky.reset();
+
+  // Remove the stored consent flag
+  localStorage.removeItem('clicky_consent');
+
+  // Reload so the page renders without initializing Clicky
+  window.location.reload();
+}
+
+document.getElementById('revoke-consent').addEventListener('click', onUserRevokesConsent);
+```
+
+<Steps>
+  <Step title="User clicks 'Withdraw consent'">
+    Your UI triggers `onUserRevokesConsent()`.
+  </Step>
+  <Step title="clicky.reset() clears the identity">
+    Any user ID set via `clicky.identify()` is removed from the current session.
+  </Step>
+  <Step title="Consent flag is deleted">
+    `localStorage.removeItem('clicky_consent')` ensures tracking is not re-enabled on the next page load.
+  </Step>
+  <Step title="Page reloads without Clicky">
+    Because the consent check at startup finds no stored grant, `clicky.init()` is never called.
+  </Step>
+</Steps>
+
+---
+
+## What NOT to track
+
+<Warning>
+  Never pass personally identifiable information (PII) as event properties. This includes full names, email addresses, phone numbers, postal addresses, government ID numbers, and any combination of data that could uniquely identify a person.
+</Warning>
+
+<Warning>
+  Never track form field values, especially passwords, credit card numbers, or security questions. Clicky does not read or transmit field values automatically, but be careful not to pass them manually via `clicky.track()`.
+</Warning>
+
+Use `clicky.identify()` to associate events with a user via an **internal user ID** (a non-guessable identifier from your database). Store sensitive user attributes in your own systems and join on the user ID when needed.
+
+---
+
+## Cookie usage
+
+Clicky sets a first-party cookie to maintain session continuity across page loads. The cookie:
+
+- Is scoped to your domain (or `cookieDomain` if configured)
+- Contains a random session identifier — no personal data
+- Expires after the session timeout period
+- Is not shared with third-party advertising networks
+
+To share sessions across subdomains, set `cookieDomain` in your config:
+
+```javascript
+clicky.init({
+  siteId: 'YOUR_SITE_ID',
+  cookieDomain: '.example.com',
+});
+```
+
+---
+
+## Data retention
+
+Data retention periods are configured in the **Clicky dashboard** under **Settings → Data Retention**. You can set custom retention windows and schedule automatic deletion of older data. These settings apply to all data collected under your site ID.
+
+---
+
+## Related
+
+<Columns cols={2}>
+  <Card title="Configuration" icon="sliders" href="/guides/configuration">
+    Full reference for anonymizeIp, respectDNT, and all other init options.
+  </Card>
+  <Card title="Custom events" icon="bolt" href="/guides/custom-events">
+    Best practices for tracking events without exposing PII.
+  </Card>
+</Columns>

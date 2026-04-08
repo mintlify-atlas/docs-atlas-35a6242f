@@ -1,0 +1,151 @@
+---
+title: 'Events'
+description: 'Learn how Clicky models user actions as events, the difference between automatic and custom events, and best practices for naming and structuring event data.'
+---
+
+An event is a named record of something that happened — a user action, a system state change, or a business milestone. Every event has a name, a timestamp, and an optional set of key-value properties that describe the context of the action.
+
+```javascript
+clicky.track('signup_completed', {
+  method: 'google_oauth',
+  plan: 'free',
+});
+```
+
+## Types of events
+
+Clicky captures two categories of events:
+
+<Columns cols={2}>
+  <Card title="Automatic events" icon="bolt">
+    Emitted by the Clicky SDK without any code changes. Covers clicks, page views, session boundaries, and SPA navigation. Enabled by default when you call `clicky.init()`.
+  </Card>
+  <Card title="Custom events" icon="pen-line">
+    Emitted when you call `clicky.track()`. Use custom events to capture business-specific actions that automatic tracking cannot infer from DOM interactions alone.
+  </Card>
+</Columns>
+
+## Automatic events reference
+
+| Event name      | Triggered when                                                        |
+| --------------- | --------------------------------------------------------------------- |
+| `click`         | A user clicks a link, button, or element with a `data-clicky` attribute |
+| `pageview`      | The page loads or a client-side route change is detected              |
+| `session_start` | A new session begins (first activity after init or after idle timeout) |
+| `session_end`   | The session idle timeout is reached or the user closes the tab        |
+
+## Event naming conventions
+
+Good event names make your data self-documenting. Follow these conventions across your application.
+
+<Tabs>
+  <Tab title="Recommended">
+
+    Use `snake_case` and name events after the completed user action, not the UI element that triggered it.
+
+    ```text
+    signup_completed
+    purchase_completed
+    report_exported
+    password_reset_requested
+    onboarding_step_viewed
+    ```
+
+  </Tab>
+  <Tab title="Avoid">
+
+    Avoid generic names, button labels, and PascalCase or camelCase conventions.
+
+    ```text
+    click              ← too generic
+    button_click       ← describes the element, not the action
+    SignupCompleted    ← wrong case
+    signupCompleted    ← wrong case
+    done               ← ambiguous
+    ```
+
+  </Tab>
+</Tabs>
+
+<Tip>
+  Name events from the user's perspective, not the developer's. `purchase_completed` is clearer than `order_post_success` because it describes what the user accomplished.
+</Tip>
+
+## Event properties
+
+Properties provide context that makes an event meaningful for analysis. Each property is a key-value pair attached to the event at the time it is tracked.
+
+### Supported value types
+
+| Type      | Example                        |
+| --------- | ------------------------------ |
+| `string`  | `plan: 'pro'`                  |
+| `number`  | `amount: 49`                   |
+| `boolean` | `trial: true`                  |
+
+### Reserved property names
+
+The following property names are reserved by Clicky and set automatically. Passing them in your `properties` object will have no effect.
+
+| Property        | Description                              |
+| --------------- | ---------------------------------------- |
+| `event`         | The event name                           |
+| `timestamp`     | ISO 8601 timestamp set by the SDK        |
+| `session_id`    | Current session identifier               |
+| `user_id`       | Identifier set by `clicky.identify()`    |
+| `url`           | Current page URL                         |
+| `referrer`      | Document referrer                        |
+
+## Custom event examples
+
+<CodeGroup>
+
+```javascript E-commerce
+clicky.track('purchase_completed', {
+  order_id: 'ord_8f2k1',
+  plan: 'pro',
+  amount: 49,
+  currency: 'USD',
+  coupon_applied: true,
+});
+```
+
+```javascript Onboarding
+clicky.track('onboarding_step_completed', {
+  step: 3,
+  step_name: 'connect_integration',
+  skipped: false,
+});
+```
+
+```javascript Feature usage
+clicky.track('report_exported', {
+  format: 'csv',
+  row_count: 1200,
+  date_range_days: 30,
+});
+```
+
+```javascript Error tracking
+clicky.track('api_error_encountered', {
+  endpoint: '/v1/users',
+  status_code: 429,
+  retried: true,
+});
+```
+
+</CodeGroup>
+
+## FAQ
+
+<AccordionGroup>
+  <Accordion title="What's the maximum number of properties per event?">
+    Each event supports up to **50 properties**. Property keys must be strings of 128 characters or fewer. String values are truncated at 1,024 characters. Number and boolean values have no size limit beyond standard JSON constraints.
+  </Accordion>
+  <Accordion title="Are events real-time?">
+    Yes. Events appear in your Clicky dashboard within seconds of being sent. The SDK batches events in a short queue (default flush interval: 2 seconds) before sending, so there may be a brief delay between the user action and dashboard visibility, but it is typically under 5 seconds end-to-end.
+  </Accordion>
+  <Accordion title="Can I delete events?">
+    Individual events cannot be deleted once they have been ingested, as they are immutable records. You can, however, filter events out of reports and dashboards in the Clicky UI. If you need to purge data for a specific user for compliance reasons, use the data deletion API in your project settings.
+  </Accordion>
+</AccordionGroup>

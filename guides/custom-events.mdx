@@ -1,0 +1,197 @@
+---
+title: "Custom events"
+description: "Track meaningful user interactions in your application using clicky.track() with custom event names and structured properties."
+---
+
+## When to use custom events
+
+Clicky's `autoTrack` option captures clicks and page views automatically. Custom events let you go further — recording the **specific interactions that matter to your product**, such as completing a checkout, playing a video, or upgrading a plan.
+
+Use `clicky.track()` when you need to:
+
+- Record an action that isn't a simple click or navigation
+- Attach structured data (price, plan name, error code) to an interaction
+- Measure feature adoption or funnel completion rates
+- Track errors and failures with context
+
+---
+
+## Naming conventions
+
+Choose event names that are clear at a glance and consistent across your codebase.
+
+**Follow this pattern:** `noun_verb` in snake_case, describing the object first and the action second.
+
+<Columns cols={2}>
+  <Card title="Good names" icon="check">
+    `video_played`\
+    `plan_upgraded`\
+    `form_submitted`\
+    `checkout_completed`\
+    `feature_enabled`
+  </Card>
+  <Card title="Avoid" icon="x">
+    `click` (too generic)\
+    `videoPlayed` (camelCase)\
+    `Video Played` (spaces)\
+    `userDidSomething` (vague)\
+    `e` (not readable)
+  </Card>
+</Columns>
+
+---
+
+## Basic usage
+
+```javascript
+clicky.track('plan_upgraded');
+```
+
+The first argument is the event name. That's all you need for simple interactions.
+
+---
+
+## Adding properties
+
+Pass a properties object as the second argument to attach structured data to an event. Properties can be strings, numbers, or booleans.
+
+### E-commerce
+
+```javascript
+clicky.track('checkout_completed', {
+  order_id: 'ord_9821',
+  total: 149.99,
+  currency: 'USD',
+  item_count: 3,
+  coupon_applied: true,
+});
+```
+
+### SaaS
+
+```javascript
+clicky.track('plan_upgraded', {
+  from_plan: 'starter',
+  to_plan: 'pro',
+  billing_cycle: 'annual',
+  seats: 10,
+});
+```
+
+### Media
+
+```javascript
+clicky.track('video_played', {
+  video_id: 'v_intro_tour',
+  title: 'Product intro tour',
+  duration_seconds: 142,
+  autoplay: false,
+});
+```
+
+---
+
+## Tracking with user context
+
+Call `clicky.identify()` before `clicky.track()` to attach a user identity to subsequent events. Clicky automatically links all events tracked after `identify()` to that user.
+
+```javascript
+// Identify the user first
+clicky.identify('user_4829', {
+  name: 'Ada Lovelace',
+  email: 'ada@example.com',
+  plan: 'pro',
+});
+
+// All subsequent events are linked to user_4829
+clicky.track('dashboard_viewed');
+clicky.track('report_exported', { format: 'csv' });
+```
+
+---
+
+## Common patterns
+
+### Button clicks with context
+
+Track which specific button was clicked along with the surrounding context:
+
+```javascript
+document.querySelectorAll('[data-track]').forEach((button) => {
+  button.addEventListener('click', () => {
+    clicky.track('button_clicked', {
+      label: button.textContent.trim(),
+      location: button.dataset.track,
+      page: window.location.pathname,
+    });
+  });
+});
+```
+
+### Form submissions
+
+Capture form completions without recording field values:
+
+```javascript
+document.getElementById('signup-form').addEventListener('submit', (event) => {
+  clicky.track('signup_form_submitted', {
+    form_id: 'signup-form',
+    referrer: document.referrer || 'direct',
+  });
+});
+```
+
+### Feature usage
+
+Record when users engage with a specific feature:
+
+```javascript
+function enableDarkMode() {
+  // ... apply dark mode logic ...
+
+  clicky.track('dark_mode_enabled', {
+    trigger: 'settings_panel',
+  });
+}
+```
+
+### Error tracking
+
+Log client-side errors with enough context to reproduce them:
+
+```javascript
+window.addEventListener('error', (event) => {
+  clicky.track('javascript_error', {
+    message: event.message,
+    filename: event.filename,
+    line: event.lineno,
+    col: event.colno,
+  });
+});
+```
+
+---
+
+## Best practices
+
+<AccordionGroup>
+  <Accordion title="How many events should I track?">
+    Start small. Define the five to ten interactions that most directly reflect whether users are getting value from your product — completing onboarding, using a core feature, reaching a milestone. You can always add more events later, but a focused event schema is far easier to query and maintain than hundreds of loosely defined events.
+  </Accordion>
+
+  <Accordion title="Should I track PII in properties?">
+    No. Do not pass personally identifiable information (PII) such as full names, email addresses, phone numbers, or physical addresses as event properties. Use your user identity (set via `clicky.identify()`) to link events to a known user. If you need to enrich event data with user details, join on the user ID server-side instead.
+  </Accordion>
+
+  <Accordion title="How do I track in a single-page application (SPA)?">
+    In a SPA, the browser does not trigger a full page reload on navigation, so `autoTrack` page views may not fire correctly. Call `clicky.page()` manually whenever your router changes the active route:
+
+    ```javascript
+    router.afterEach((to) => {
+      clicky.page(to.name, { path: to.fullPath });
+    });
+    ```
+
+    See the [Integrations guide](/guides/integrations) for framework-specific examples.
+  </Accordion>
+</AccordionGroup>

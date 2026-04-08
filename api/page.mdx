@@ -1,0 +1,114 @@
+---
+title: "clicky.page()"
+description: "Manually record a page view event."
+---
+
+## Signature
+
+```typescript
+clicky.page(name?: string, properties?: Record<string, string | number | boolean>): void
+```
+
+Use `clicky.page()` to manually record a page view. This is most useful in single-page applications (SPAs) where the browser does not issue a full page load on navigation, so Clicky's automatic detection may not fire.
+
+<Note>
+  When `autoTrack` is enabled (the default), Clicky already fires a page view on initial load and on `popstate` events. You typically only need `clicky.page()` for SPA navigation that does not trigger a `popstate` event, such as hash-based routing or programmatic navigation via a router library.
+</Note>
+
+## Parameters
+
+<ParamField body="name" type="string">
+  A human-readable name for the page. Defaults to `document.title` when not provided. Use this to supply a clean, consistent name independent of the HTML title (e.g., `"Billing settings"` instead of `"Settings | Billing | Acme – Dashboard"`).
+</ParamField>
+
+<ParamField body="properties" type="object">
+  An optional flat object of metadata about the page view. Values must be `string`, `number`, or `boolean`. Useful for passing context such as the page category, locale, or feature flags active on the page.
+
+  <Expandable title="common properties">
+    <ResponseField name="category" type="string">
+      A grouping for the page (e.g., `"settings"`, `"onboarding"`, `"marketing"`).
+    </ResponseField>
+    <ResponseField name="locale" type="string">
+      The language or locale code for the page (e.g., `"en-US"`, `"fr-FR"`).
+    </ResponseField>
+    <ResponseField name="section" type="string">
+      A sub-section within the page category (e.g., `"billing"` within `"settings"`).
+    </ResponseField>
+  </Expandable>
+</ParamField>
+
+## Examples
+
+### Manual page view using document.title
+
+Call with no arguments to record a page view using the current `document.title`:
+
+```javascript
+clicky.page();
+```
+
+### Page view with a custom name
+
+```javascript
+clicky.page("Pricing", { category: "marketing" });
+```
+
+### React Router integration
+
+Trigger a page view on every route change by adding a listener inside your router:
+
+```jsx
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
+
+function ClickyPageTracker() {
+  const location = useLocation();
+
+  useEffect(() => {
+    clicky.page(document.title, { path: location.pathname });
+  }, [location]);
+
+  return null;
+}
+
+// Add <ClickyPageTracker /> inside your <Router> component
+export default function App() {
+  return (
+    <Router>
+      <ClickyPageTracker />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/pricing" element={<Pricing />} />
+      </Routes>
+    </Router>
+  );
+}
+```
+
+### Next.js router.events listener
+
+Listen to Next.js router events to capture client-side page transitions:
+
+```javascript
+// pages/_app.js
+import { useEffect } from "react";
+import { useRouter } from "next/router";
+
+export default function App({ Component, pageProps }) {
+  const router = useRouter();
+
+  useEffect(() => {
+    function handleRouteChange(url) {
+      clicky.page(document.title, { path: url });
+    }
+
+    router.events.on("routeChangeComplete", handleRouteChange);
+
+    return () => {
+      router.events.off("routeChangeComplete", handleRouteChange);
+    };
+  }, [router.events]);
+
+  return <Component {...pageProps} />;
+}
+```

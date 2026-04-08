@@ -1,0 +1,96 @@
+---
+title: 'How tracking works'
+description: 'Understand how Clicky instruments your application, captures user interactions automatically, and sends data to the collection pipeline.'
+---
+
+Clicky uses event delegation to capture user interactions at the document level, which means you get comprehensive tracking coverage without attaching individual listeners to every element. When you call `clicky.init()`, Clicky instruments the DOM once and listens for bubbled events from that single point.
+
+## Automatic tracking
+
+Once initialized, Clicky automatically captures a set of standard interactions without any additional configuration.
+
+<Columns cols={3}>
+  <Card title="Click events" icon="mouse-pointer">
+    Clicks on links, buttons, inputs, and any element with a `data-clicky` attribute are captured with element metadata and page context.
+  </Card>
+  <Card title="Page views" icon="file">
+    On initial load, Clicky records a `pageview` event with the current URL, referrer, and document title.
+  </Card>
+  <Card title="SPA navigation" icon="arrow-right-arrow-left">
+    Clicky patches the History API and listens for `popstate` events to detect client-side route changes in React, Vue, Svelte, and other frameworks.
+  </Card>
+</Columns>
+
+## Manual tracking
+
+Automatic tracking covers the basics, but most applications need custom events tied to specific business logic — form submissions, feature usage, conversion steps, errors. Use `clicky.track()` whenever you need to record something that isn't a raw DOM interaction.
+
+```javascript
+// Record a custom event with properties
+clicky.track('purchase_completed', {
+  plan: 'pro',
+  amount: 49,
+  currency: 'USD',
+});
+```
+
+A good rule of thumb: if the event has business meaning and automatic tracking would not capture the full context (like which plan was purchased), use `clicky.track()`.
+
+## Data flow
+
+The path from a user action to your dashboard follows five stages:
+
+<Steps>
+  <Step title="User action">
+    A user clicks a button, navigates to a new route, or your code calls `clicky.track()` directly.
+  </Step>
+  <Step title="DOM event">
+    The browser emits a native event. Clicky's delegated listener at the document root intercepts it, or the manual `track()` call enqueues an event immediately.
+  </Step>
+  <Step title="Clicky SDK">
+    The SDK enriches the raw event with session context, user identity (if known), timestamps, and device metadata, then pushes it onto the async dispatch queue.
+  </Step>
+  <Step title="Collection API">
+    The queue flushes events in batches to Clicky's collection endpoint over HTTPS. Batching reduces network overhead and retries automatically on transient failures.
+  </Step>
+  <Step title="Dashboard">
+    Events are processed, indexed, and made available in real time in your Clicky dashboard for analysis and alerting.
+  </Step>
+</Steps>
+
+## Automatic vs. manual tracking in code
+
+<CodeGroup>
+
+```javascript Automatic tracking (init only)
+import clicky from '@clicky/web';
+
+// Automatic tracking starts immediately after init.
+// No additional code is required for clicks, pageviews,
+// and SPA navigation changes.
+clicky.init({
+  siteId: 'YOUR_SITE_ID',
+});
+```
+
+```javascript Manual tracking
+import clicky from '@clicky/web';
+
+clicky.init({
+  siteId: 'YOUR_SITE_ID',
+});
+
+// Somewhere in your application logic:
+function onCheckout(order) {
+  clicky.track('checkout_started', {
+    itemCount: order.items.length,
+    totalValue: order.total,
+  });
+}
+```
+
+</CodeGroup>
+
+<Note>
+  Clicky uses a non-blocking async queue for all event dispatch. Events are enqueued synchronously in memory and flushed to the network on the next idle callback or a short timer, whichever comes first. This means calling `clicky.track()` never blocks the main thread and has no measurable impact on page performance or Core Web Vitals.
+</Note>

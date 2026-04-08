@@ -1,23 +1,11 @@
 {
-  "$schema": "https://mintlify.com/docs.json",
-  "name": "Clicky",
+  "projectType": "frontend",
+  "projectName": "Clicky",
+  "projectDescription": "A lightweight click and user interaction tracking library for web applications.",
   "theme": "luma",
-  "colors": {
-    "primary": "#2563EB",
-    "light": "#DBEAFE",
-    "dark": "#1E3A8A"
-  },
-  "navbar": {
-    "primary": {
-      "type": "github",
-      "href": "https://github.com/farzaa/clicky"
-    }
-  },
-  "footer": {
-    "socials": {
-      "github": "https://github.com/farzaa/clicky"
-    }
-  },
+  "primaryColor": "#2563EB",
+  "lightColor": "#DBEAFE",
+  "darkColor": "#1E3A8A",
   "navigation": {
     "tabs": [
       {
@@ -60,12 +48,26 @@
               "api/init",
               "api/track",
               "api/identify",
-              "api/page",
-              "api/reset"
+              "api/page"
             ]
           }
         ]
       }
     ]
-  }
+  },
+  "keyFeatures": [
+    "Lightweight click and interaction tracking",
+    "Automatic event capture",
+    "Custom event tracking",
+    "User session management",
+    "Privacy-first design",
+    "Framework agnostic"
+  ],
+  "publicApiSurface": [
+    "clicky.init(config)",
+    "clicky.track(event, properties)",
+    "clicky.identify(userId, traits)",
+    "clicky.page(name, properties)",
+    "clicky.reset()"
+  ]
 }

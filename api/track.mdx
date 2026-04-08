@@ -1,0 +1,99 @@
+---
+title: "clicky.track()"
+description: "Record a custom user interaction event."
+---
+
+## Signature
+
+```typescript
+clicky.track(event: string, properties?: Record<string, string | number | boolean>): void
+```
+
+Use `clicky.track()` to capture any meaningful user action in your application. Each call records a named event and attaches it to the current session and, if set, the current user identity.
+
+## Parameters
+
+<ParamField body="event" type="string" required>
+  The name of the event to record. Use `snake_case` for consistency (e.g., `"purchase_completed"`, `"plan_upgraded"`). Event names are case-sensitive and have a maximum length of 64 characters.
+</ParamField>
+
+<ParamField body="properties" type="object">
+  An optional flat object of key-value pairs to attach to the event. Values must be `string`, `number`, or `boolean`. Nested objects and arrays are not supported. Maximum 20 properties per event.
+
+  <Expandable title="properties constraints">
+    <ResponseField name="key" type="string">
+      Property key. Use `snake_case`. Maximum 64 characters per key.
+    </ResponseField>
+    <ResponseField name="value" type="string | number | boolean">
+      Property value. Strings have a maximum length of 256 characters. Nested objects and arrays are not accepted and will be dropped silently.
+    </ResponseField>
+  </Expandable>
+</ParamField>
+
+## Examples
+
+### Simple event
+
+Record an event with no additional data:
+
+```javascript
+clicky.track("newsletter_subscribed");
+```
+
+### E-commerce: purchase completed
+
+```javascript
+clicky.track("purchase_completed", {
+  revenue: 49.99,
+  currency: "USD",
+  product_id: "prod_abc123",
+  quantity: 2,
+});
+```
+
+### SaaS: plan upgraded
+
+```javascript
+clicky.track("plan_upgraded", {
+  from_plan: "starter",
+  to_plan: "pro",
+  user_id: "user_456",
+  trial_converted: true,
+});
+```
+
+### Media: video played
+
+```javascript
+clicky.track("video_played", {
+  title: "Getting Started with Clicky",
+  duration: 342,
+  source: "youtube",
+  autoplay: false,
+});
+```
+
+### Multiple events in a flow
+
+```javascript
+// User starts checkout
+clicky.track("checkout_started", { cart_value: 89.95 });
+
+// User applies a coupon
+clicky.track("coupon_applied", { code: "LAUNCH20", discount: 17.99 });
+
+// User completes purchase
+clicky.track("purchase_completed", {
+  revenue: 71.96,
+  currency: "USD",
+  coupon_used: true,
+});
+```
+
+<Tip>
+  Use consistent, descriptive event names across your application. A clear convention like `noun_verb` (e.g., `file_downloaded`, `form_submitted`, `modal_closed`) makes your data much easier to query and analyze. Agree on a naming standard with your team and document it in your tracking plan.
+</Tip>
+
+<Warning>
+  Do not include personally identifiable information (PII) in event properties. This includes email addresses, full names, phone numbers, physical addresses, and government IDs. Use opaque identifiers (e.g., a database ID) instead, and store PII only in your own systems. See [Privacy](/guides/privacy) for more details.
+</Warning>

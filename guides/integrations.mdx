@@ -1,0 +1,369 @@
+---
+title: "Integrations"
+description: "Use Clicky with React, Next.js, Vue, and plain JavaScript. These are recommended patterns — Clicky is framework agnostic."
+---
+
+<Note>
+  Clicky is framework agnostic. The examples below are recommended patterns that fit each framework's conventions. You are not required to follow them exactly — any approach that calls `clicky.init()` before tracking events will work.
+</Note>
+
+---
+
+## Installation
+
+Install Clicky via npm or load it from a CDN.
+
+<Tabs>
+  <Tab title="npm">
+    ```bash
+    npm install @clicky/web
+    ```
+  </Tab>
+  <Tab title="CDN">
+    ```html
+    <script src="https://cdn.clicky.io/clicky.min.js" defer></script>
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## Framework guides
+
+<Tabs>
+  <Tab title="React">
+    ### Initialize on mount
+
+    Call `clicky.init()` inside a `useEffect` at the root of your application so it runs once after the component mounts.
+
+    ```jsx App.jsx
+    import { useEffect } from 'react';
+    import clicky from '@clicky/web';
+
+    export default function App() {
+      useEffect(() => {
+        clicky.init({
+          siteId: process.env.REACT_APP_CLICKY_SITE_ID,
+          autoTrack: false, // manually control tracking in a SPA
+        });
+      }, []);
+
+      return <YourApp />;
+    }
+    ```
+
+    ### Custom hook
+
+    Encapsulate tracking logic in a reusable hook to keep component code clean:
+
+    ```javascript useClicky.js
+    import clicky from '@clicky/web';
+
+    export function useClicky() {
+      function track(event, properties) {
+        clicky.track(event, properties);
+      }
+
+      function identify(userId, traits) {
+        clicky.identify(userId, traits);
+      }
+
+      function page(name, properties) {
+        clicky.page(name, properties);
+      }
+
+      return { track, identify, page };
+    }
+    ```
+
+    ```jsx PricingPage.jsx
+    import { useClicky } from '../hooks/useClicky';
+
+    export default function PricingPage() {
+      const { track } = useClicky();
+
+      function handleUpgrade(plan) {
+        track('plan_selected', { plan });
+      }
+
+      return (
+        <button onClick={() => handleUpgrade('pro')}>
+          Upgrade to Pro
+        </button>
+      );
+    }
+    ```
+
+    ### Page view tracking in React Router
+
+    React Router does not trigger a browser navigation event on route change. Track page views manually using the `useLocation` hook:
+
+    ```jsx App.jsx
+    import { useEffect } from 'react';
+    import { useLocation } from 'react-router-dom';
+    import clicky from '@clicky/web';
+
+    function PageTracker() {
+      const location = useLocation();
+
+      useEffect(() => {
+        clicky.page(document.title, { path: location.pathname });
+      }, [location]);
+
+      return null;
+    }
+    ```
+  </Tab>
+
+  <Tab title="Next.js">
+    ### Script component (CDN)
+
+    Use Next.js's built-in `<Script>` component to load Clicky from the CDN with the correct loading strategy:
+
+    ```jsx pages/_app.js
+    import Script from 'next/script';
+
+    export default function MyApp({ Component, pageProps }) {
+      return (
+        <>
+          <Script
+            src="https://cdn.clicky.io/clicky.min.js"
+            strategy="afterInteractive"
+            onLoad={() => {
+              window.clicky.init({
+                siteId: process.env.NEXT_PUBLIC_CLICKY_SITE_ID,
+                autoTrack: false,
+              });
+            }}
+          />
+          <Component {...pageProps} />
+        </>
+      );
+    }
+    ```
+
+    ### npm + App Router initialization
+
+    When using the App Router, initialize Clicky in a client component mounted at the layout level:
+
+    ```jsx app/analytics.jsx
+    'use client';
+
+    import { useEffect } from 'react';
+    import clicky from '@clicky/web';
+
+    export default function Analytics() {
+      useEffect(() => {
+        clicky.init({
+          siteId: process.env.NEXT_PUBLIC_CLICKY_SITE_ID,
+          autoTrack: false,
+        });
+      }, []);
+
+      return null;
+    }
+    ```
+
+    ```jsx app/layout.jsx
+    import Analytics from './analytics';
+
+    export default function RootLayout({ children }) {
+      return (
+        <html lang="en">
+          <body>
+            <Analytics />
+            {children}
+          </body>
+        </html>
+      );
+    }
+    ```
+
+    ### Track page transitions (Pages Router)
+
+    Use `router.events` to fire a page view on every client-side navigation:
+
+    ```jsx pages/_app.js
+    import { useEffect } from 'react';
+    import { useRouter } from 'next/router';
+    import clicky from '@clicky/web';
+
+    export default function MyApp({ Component, pageProps }) {
+      const router = useRouter();
+
+      useEffect(() => {
+        clicky.init({
+          siteId: process.env.NEXT_PUBLIC_CLICKY_SITE_ID,
+          autoTrack: false,
+        });
+
+        function handleRouteChange(url) {
+          clicky.page(document.title, { path: url });
+        }
+
+        router.events.on('routeChangeComplete', handleRouteChange);
+        return () => {
+          router.events.off('routeChangeComplete', handleRouteChange);
+        };
+      }, [router.events]);
+
+      return <Component {...pageProps} />;
+    }
+    ```
+  </Tab>
+
+  <Tab title="Vue">
+    ### Plugin pattern
+
+    Create a Clicky plugin to make tracking available throughout your Vue app via `this.$clicky`:
+
+    ```javascript plugins/clicky.js
+    import clicky from '@clicky/web';
+
+    export default {
+      install(app, options) {
+        clicky.init(options);
+        app.config.globalProperties.$clicky = clicky;
+      },
+    };
+    ```
+
+    ```javascript main.js
+    import { createApp } from 'vue';
+    import App from './App.vue';
+    import ClickyPlugin from './plugins/clicky';
+
+    const app = createApp(App);
+
+    app.use(ClickyPlugin, {
+      siteId: import.meta.env.VITE_CLICKY_SITE_ID,
+      autoTrack: false,
+    });
+
+    app.mount('#app');
+    ```
+
+    ### Initialization via mounted lifecycle hook
+
+    If you prefer not to use a plugin, initialize in the root component's `mounted` hook:
+
+    ```javascript App.vue
+    <script>
+    import clicky from '@clicky/web';
+
+    export default {
+      name: 'App',
+      mounted() {
+        clicky.init({
+          siteId: import.meta.env.VITE_CLICKY_SITE_ID,
+          autoTrack: false,
+        });
+      },
+    };
+    </script>
+    ```
+
+    ### Tracking in methods
+
+    Once the plugin is registered, call `this.$clicky.track()` from any component method:
+
+    ```javascript UpgradeButton.vue
+    <template>
+      <button @click="handleUpgrade">Upgrade to Pro</button>
+    </template>
+
+    <script>
+    export default {
+      name: 'UpgradeButton',
+      methods: {
+        handleUpgrade() {
+          this.$clicky.track('plan_selected', { plan: 'pro' });
+        },
+      },
+    };
+    </script>
+    ```
+
+    ### Page view tracking with Vue Router
+
+    Use the `afterEach` navigation guard to fire a page view on every route change:
+
+    ```javascript router/index.js
+    import { createRouter, createWebHistory } from 'vue-router';
+    import clicky from '@clicky/web';
+
+    const router = createRouter({
+      history: createWebHistory(),
+      routes: [/* ... */],
+    });
+
+    router.afterEach((to) => {
+      clicky.page(to.name || to.path, { path: to.fullPath });
+    });
+
+    export default router;
+    ```
+  </Tab>
+
+  <Tab title="Plain JavaScript">
+    ### Defer script loading
+
+    Add the `defer` attribute so Clicky loads after your HTML without blocking rendering, then initialize on `DOMContentLoaded`:
+
+    ```html index.html
+    <!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <title>My App</title>
+        <script src="https://cdn.clicky.io/clicky.min.js" defer></script>
+      </head>
+      <body>
+        <button id="upgrade-btn">Upgrade</button>
+
+        <script>
+          document.addEventListener('DOMContentLoaded', function () {
+            clicky.init({
+              siteId: 'YOUR_SITE_ID',
+              autoTrack: true,
+            });
+
+            document.getElementById('upgrade-btn').addEventListener('click', function () {
+              clicky.track('plan_selected', { plan: 'pro' });
+            });
+          });
+        </script>
+      </body>
+    </html>
+    ```
+
+    ### npm module
+
+    If you are bundling your JavaScript, import and initialize Clicky as a module:
+
+    ```javascript main.js
+    import clicky from '@clicky/web';
+
+    clicky.init({
+      siteId: 'YOUR_SITE_ID',
+      autoTrack: false,
+    });
+
+    // Track events anywhere in your code
+    export { clicky };
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## Next steps
+
+<Columns cols={2}>
+  <Card title="Custom events" icon="bolt" href="/guides/custom-events">
+    Learn how to name and structure events for clean, queryable data.
+  </Card>
+  <Card title="Privacy & compliance" icon="shield" href="/guides/privacy">
+    Configure IP anonymization, consent flows, and Do Not Track support.
+  </Card>
+</Columns>
